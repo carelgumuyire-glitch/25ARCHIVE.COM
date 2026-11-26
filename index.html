@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>25Archive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: acid-green landing with two dropdown menus flanking the logo; white sub-pages with a centred grid, BACK top right, click-to-open popups. */
+:root{
+  --green:#93fe55;
+  --ink:#0d0d0d;
+  --paper:#ffffff;
+  --logo:#151313;
+  --pill:rgba(255,255,255,.42);
+  --pill-line:rgba(255,255,255,.7);
+  --card-line:#e6e6e6;
+  --mono:"Courier New",Courier,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:var(--mono);font-weight:700;
+  background:var(--paper);color:var(--ink);
+  --page:var(--paper);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  transition:background-color .25s ease;
+}
+body[data-page="main"]{background:var(--green);--page:var(--green)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+/* header */
+.top{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;
+  padding:22px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));font-size:13px;letter-spacing:.01em;pointer-events:none}
+.top>*{pointer-events:auto}
+.top .l{justify-self:start}.top .c{justify-self:center}.top .r{justify-self:end}
+.top .r.is-back{cursor:pointer;font-size:14px}
+
+.mini{position:fixed;left:max(20px,env(safe-area-inset-left,0px));top:46%;width:38px;z-index:4}
+.mini svg,.logo svg{display:block;width:100%;height:auto;overflow:visible}
+.mini img,.logo img{display:block;width:100%;height:auto}
+.mini,.logo{mix-blend-mode:multiply}
+.logo-fill{fill:var(--logo)}.logo-hole{fill:var(--page)}.logo-dot{fill:#fff}.logo-notch{stroke:var(--page);stroke-width:9;fill:none}
+
+/* main */
+/* positions measured from the original landing page (centres as % of the screen) */
+.main{position:relative;height:100dvh}
+.logo{position:absolute;left:49.8%;top:49.8%;transform:translate(-50%,-50%);width:clamp(140px,14.9vw,240px)}
+.menu{position:absolute;transform:translate(-50%,-50%);text-align:center}
+.menu[data-menu="l"]{left:24.9%;top:45.9%}
+.menu[data-menu="r"]{left:78.7%;top:45.3%}
+.menu .label{font-size:clamp(20px,1.95vw,26px);padding:6px 16px;border-radius:999px;letter-spacing:.01em;white-space:nowrap}
+/* folder menu: ARCHIVE / SLDR open a 3D stack of folders over a blurred landing page */
+.menu.open{z-index:12}
+.fm{position:fixed;inset:0;z-index:10;perspective:1500px;perspective-origin:50% 38%;animation:fade .2s ease}
+.fm[hidden]{display:none!important}
+.fm-bg{position:absolute;inset:0;-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+.fm-stack{position:absolute;left:50%;top:60%;width:0;height:0;transform-style:preserve-3d}
+.fm-stack a{position:absolute;left:0;top:0;width:var(--fw);margin:calc(var(--fw)*-.5) 0 0 calc(var(--fw)*-.5);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:clamp(14px,1.45vw,19px);
+  transform:translate3d(var(--x),var(--y),var(--z)) rotateY(-40deg);transition:transform .3s cubic-bezier(.2,.8,.2,1);animation:fin .5s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--n)*70ms)}
+.fm-stack a:hover,.fm-stack a:focus-visible{transform:translate3d(var(--x),calc(var(--y) - 10px),calc(var(--z) + 90px)) rotateY(-8deg)}
+.fm-stack img{display:block;width:100%;height:auto;filter:drop-shadow(0 14px 14px rgba(0,0,0,.22));-webkit-user-drag:none}
+.fm-stack .nm{padding:3px 12px;border-radius:999px;outline:1px solid transparent;transition:background-color .15s ease,outline-color .15s ease}
+.fm-stack a:hover .nm,.fm-stack a:focus-visible .nm{background:var(--pill);outline-color:var(--pill-line)}
+@keyframes fin{from{opacity:0;transform:translate3d(calc(var(--x) + 160px),calc(var(--y) - 60px),calc(var(--z) - 360px)) rotateY(-40deg)}to{opacity:1;transform:translate3d(var(--x),var(--y),var(--z)) rotateY(-40deg)}}
+
+/* music pill */
+.mp{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:11;display:flex;align-items:center;gap:14px;height:54px;padding:0 24px 0 18px;border-radius:999px;background:#050505;color:#fff;font-size:17px;line-height:1;box-shadow:0 12px 32px rgba(0,0,0,.18);white-space:nowrap}
+.mp-btn{width:30px;height:30px;display:grid;place-items:center;transition:transform .15s ease}
+.mp-btn:hover{transform:scale(1.06)}
+.mp-btn:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:6px}
+.mp{transition:opacity .2s ease}
+body.popup .mp{opacity:0;pointer-events:none}
+.pw{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:rgba(255,255,255,.12)}
+.pw.on{display:flex}
+.pw p{margin:0;font-weight:700;font-size:18px;letter-spacing:.04em;color:#000;text-transform:uppercase}
+.pw-tab{width:min(300px,80vw);height:50px;background:none;border:0;display:flex;align-items:center;padding:0 22px}
+.pw-tab input{all:unset;width:100%;text-align:center;font:inherit;font-weight:700;font-size:18px;letter-spacing:.12em;color:#000}
+.pw-tab.bad{animation:pwshake .35s}
+@keyframes pwshake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.plq{display:flex;flex-direction:column;align-items:center;gap:clamp(34px,6vh,60px);padding-top:clamp(6px,2vh,20px);width:100%}
+.plq-b{display:block;width:min(400px,78vw);cursor:pointer;transition:transform .18s ease}
+.plq-b:hover{transform:translateY(-3px)}
+.plq-b img{display:block;width:100%;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.22))}
+.idp{position:fixed;inset:0;z-index:25;display:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);background:rgba(255,255,255,.62);cursor:zoom-out}
+.idp.on{display:block;animation:fade .2s ease}
+.idx{position:fixed;top:max(16px,env(safe-area-inset-top,0px));right:max(20px,env(safe-area-inset-right,0px));z-index:2;font:inherit;font-weight:700;font-size:14px;letter-spacing:.04em;background:none;border:0;padding:6px 0;cursor:pointer;color:#000}
+.idc{max-width:600px;margin:0 auto;padding:clamp(64px,11vh,100px) 22px calc(150px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:clamp(44px,8vh,72px)}
+.idb{width:100%;cursor:default}
+.idt{margin:0;text-align:center;font-weight:700;font-size:clamp(26px,5vw,34px);letter-spacing:.06em}
+.idpara{margin:0;font-weight:700;font-size:14px;line-height:1.6}
+.idimgs{display:flex;flex-direction:column;align-items:center;gap:clamp(22px,4vh,34px)}
+.idimgs img{display:block;width:min(100%,340px);height:auto}
+.idlogo{text-align:center}.idlogo img{width:clamp(200px,52vw,290px);height:auto}
+.idg{text-align:center}.idg img{width:min(100%,420px);height:auto}.idg img.mul{mix-blend-mode:multiply}
+.idd{font-weight:700;font-size:13px;line-height:1.55;letter-spacing:.01em;display:flex;flex-direction:column;gap:clamp(26px,4.5vh,38px)}
+.idd p{margin:0}.idd .big2{font-size:clamp(24px,5vw,32px);line-height:1.05;letter-spacing:.01em}.idd .mid{font-size:clamp(17px,3.6vw,22px);line-height:1.15}
+.mp-v{position:relative;display:grid;place-items:center;width:28px;height:30px}
+.mp-vb{width:28px;height:30px;display:grid;place-items:center;opacity:.85}
+.mp-vb:hover{opacity:1}
+.mp-vp{position:absolute;left:50%;bottom:calc(100% + 14px);transform:translateX(-50%);width:42px;height:150px;border-radius:21px;background:rgba(30,30,30,.38);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.25);display:none;touch-action:none;cursor:pointer}
+.mp-vp.on{display:block}
+.mp-vt{position:absolute;left:50%;top:14px;bottom:14px;width:4px;margin-left:-2px;border-radius:4px;background:rgba(255,255,255,.3)}
+.mp-vf{position:absolute;left:0;right:0;bottom:0;border-radius:4px;background:#fff}
+.mp-vk{position:absolute;left:50%;width:14px;height:14px;margin:0 0 -7px -7px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.mp-t{color:rgba(255,255,255,.6);min-width:3.4ch;text-align:right;font-variant-numeric:tabular-nums}
+
+/* illustrations: rotating 3D ring */
+.sub{overflow-x:hidden}
+.ring-stage{position:relative;width:100vw;margin:clamp(8px,3vh,32px) 0 0 calc(50% - 50vw);perspective:1150px;overflow:hidden;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+.ring-stage.drag{cursor:grabbing}
+.ring{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d;will-change:transform}
+.item.rc{position:absolute;left:0;top:0;width:var(--cw);height:calc(var(--cw)*1.3333);aspect-ratio:auto;margin:calc(var(--cw)*-.6667) 0 0 calc(var(--cw)*-.5);
+  transform:rotateY(calc(var(--i)*var(--step))) translateZ(var(--R));backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .3s ease;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.item.rc:hover{transform:rotateY(calc(var(--i)*var(--step))) translateZ(calc(var(--R) + 28px))}
+.item.rc img{width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.num{position:fixed;left:max(70px,calc(env(safe-area-inset-left,0px) + 54px));bottom:calc(20px + env(safe-area-inset-bottom,0px));font-size:15px}
+
+/* sub-pages */
+.sub{min-height:100dvh;padding-block:clamp(80px,10vh,104px) 112px;display:flex;flex-direction:column;align-items:center}
+.wrap{width:100%;max-width:820px}
+.tag{display:inline-block;background:#000;color:#fff;padding:5px 8px;line-height:1.15;font-size:15px;letter-spacing:.01em;margin-bottom:clamp(20px,3.5vh,36px)}
+.grid{display:grid;gap:clamp(28px,5vw,56px) clamp(20px,4vw,48px)}
+.g-garments{grid-template-columns:repeat(4,minmax(0,1fr));max-width:760px;margin-inline:auto;gap:clamp(8px,2vw,24px)}
+.objs{display:flex;flex-direction:column;align-items:center;gap:clamp(24px,5vh,56px);width:100%}
+.item.obj{aspect-ratio:auto;width:min(var(--ow),100%);height:auto}
+.item.obj img{height:auto}
+.g-posters{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g-posters{display:flex;flex-wrap:wrap;gap:clamp(20px,4vw,56px);align-items:flex-start}
+.g-posters .item{aspect-ratio:auto;width:auto;max-width:100%;height:clamp(260px,56vh,480px)}
+.g-posters .item img{width:auto;max-width:100%;height:100%;object-fit:contain}
+.g-identity{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g-illus{grid-template-columns:repeat(3,minmax(0,1fr))}
+.item{display:block;width:100%;aspect-ratio:1/1;transition:transform .18s ease}
+.item:hover{transform:translateY(-3px)}
+.item svg,.item img,.ph{width:100%;height:100%;display:block;object-fit:contain}
+.item.tall{aspect-ratio:3/4}.item.wide{aspect-ratio:4/3}
+.ph{display:grid;place-items:center;font-size:12px;color:var(--ink);text-align:center;position:relative;overflow:hidden}
+.ph span{position:relative;z-index:1;padding:6px;background:rgba(255,255,255,.55)}
+.ph svg{position:absolute;inset:12%;width:76%;height:76%;opacity:.9}
+.sec{margin-top:clamp(48px,7vh,80px);display:flex;flex-direction:column;align-items:center;gap:18px}
+.sec .row{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(16px,3vw,32px);width:100%}
+.sec .row .item{width:clamp(96px,16vw,150px);aspect-ratio:1/3.4}
+.sec .row .item.card{width:clamp(130px,26vw,310px);aspect-ratio:4/3}
+.cap-s{font-size:11px;text-align:center}
+.cap-m{font-size:20px;text-align:center}
+
+/* illustrations: packed mosaic + spaced concepts */
+.wrap.wide{max-width:940px}
+.mosaic{--w:min(calc(100vw - 32px),940px);width:var(--w);display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0}
+.mosaic .item{aspect-ratio:3/4;width:100%;height:auto;transition:filter .15s ease}
+.mosaic .item img{object-fit:cover}
+.mosaic .item:hover{transform:none;filter:brightness(1.08)}
+.concepts{margin-top:clamp(28px,5vh,56px)}
+.concepts .lbl{font-size:12px;margin:0 0 40px}
+.cgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(12px,3vw,32px);align-items:start}
+.cgrid .item{aspect-ratio:auto;height:auto}
+.cgrid .item img{height:auto}
+.citem{display:flex;flex-direction:column;align-items:center;gap:12px}
+.citem .item{aspect-ratio:auto;width:var(--cw);height:var(--ch)}
+.cap-xs{font-size:8px;letter-spacing:.02em;text-align:center}
+
+/* people: one photo per row, centred */
+.ptitle{margin:clamp(32px,6vh,64px) 0 clamp(36px,6vh,64px);font-size:clamp(16px,2vw,22px);font-weight:700;text-align:center;letter-spacing:.02em}
+.others{margin-top:clamp(56px,9vh,90px);display:flex;flex-direction:column;align-items:center}
+.others .tag{margin-bottom:22px}
+.others p{margin:0;font-size:15px;line-height:1.7;text-align:center}
+.plist{display:flex;flex-direction:column;align-items:center;gap:clamp(36px,6vh,64px)}
+.item.pimg{aspect-ratio:auto;width:min(400px,78vw);height:auto}
+.item.pimg{overflow:hidden}
+.item.pimg img{height:auto;object-fit:cover;filter:blur(12px);transform:scale(1.1)}
+.pbox{position:fixed;inset:0;z-index:21;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px 16px;animation:fade2 .25s ease;cursor:zoom-out}
+.pbox[hidden]{display:none!important}
+.pbox img{display:block;max-width:min(92vw,560px);max-height:66dvh;width:auto;height:auto;box-shadow:0 12px 50px rgba(0,0,0,.2)}
+.pbox .pn{margin:0 0 -14px;font-size:17px;letter-spacing:.02em}
+.pbox p{max-width:min(92vw,560px);margin:0;font-size:15px;line-height:1.5;text-align:center;white-space:pre-line}
+.pbox p[hidden]{display:none}
+
+/* popup */
+.pop{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(255,255,255,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:fade .18s ease}
+.pop[hidden]{display:none!important}
+.pop.bare{cursor:zoom-out}.pop.bare .card{display:none}
+.big{position:fixed;inset:0;margin:auto;z-index:21;max-width:min(92vw,900px);max-height:90dvh;width:auto;height:auto;animation:fade2 .25s ease;cursor:zoom-out}
+.big.mul{mix-blend-mode:multiply}
+.big.raw{box-shadow:0 12px 50px rgba(0,0,0,.2)}
+.big[hidden]{display:none!important}
+@keyframes fade2{from{opacity:0}to{opacity:1}}
+.card{background:#fff;width:min(820px,100%);height:min(88dvh,900px);border:1px solid var(--card-line);border-radius:18px;box-shadow:0 10px 50px rgba(0,0,0,.12);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:clamp(24px,5vw,56px);animation:rise .22s ease}
+.card .art{flex:1;min-height:0;width:100%;display:grid;place-items:center}
+.card .art>*{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.card:focus,.card:focus-visible{outline:none}
+.card .cap{font-size:15px;text-align:center;padding-top:18px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:760px){
+  .logo{left:50%;top:30%;width:min(52vw,210px)}
+  .menu[data-menu="l"]{left:27%;top:56%}
+  .menu[data-menu="r"]{left:73%;top:56%}
+  .fm-stack{top:69%}
+  .mp{height:50px;font-size:16px;gap:12px}
+  .g-garments,.g-posters{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .mini{width:26px;top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  .num{left:max(52px,calc(env(safe-area-inset-left,0px) + 40px))}
+}
+</style>
+
+</head>
+<body>
+
+<header class="top">
+  <a class="l" href="#main" id="name">Carel Gumuyire</a>
+  <div class="c">25Archive</div>
+  <div class="r" id="right">Portfolio</div>
+</header>
+<a class="mini" href="#main" aria-label="25Archive home"><img src="Sldrlogo.png" alt="25Archive home" width="38"></a>
+<main id="view"></main>
+<div class="fm" id="fm" hidden><div class="fm-bg"></div><nav class="fm-stack" id="fmRow" aria-label="Folders"></nav></div>
+
+<div class="pop" id="pop" hidden>
+  <div class="card" id="card" role="dialog" aria-modal="true" tabindex="-1">
+    <div class="art" id="popArt"></div>
+    <div class="cap" id="popCap"></div>
+  </div>
+</div>
+<img class="big" id="big" alt="" hidden>
+<div class="idp" id="idp"><button class="idx" id="idx" type="button">CLOSE</button><div class="idc" id="idc"></div></div>
+<div class="pw" id="pw"><p id="pwL">Enter password</p><div class="pw-tab" id="pwT"><input id="pwI" type="password" autocomplete="off" spellcheck="false" aria-label="Enter password"></div></div>
+<div class="mp" id="mp"><button class="mp-btn" id="mpBtn" aria-label="Play"></button><span>Listening</span><div class="mp-v" id="mpV"><button class="mp-vb" id="mpVb" aria-label="Volume"></button><div class="mp-vp" id="mpVp"><div class="mp-vt" id="mpVt"><div class="mp-vf" id="mpVf"></div><div class="mp-vk" id="mpVk"></div></div></div></div><span class="mp-t" id="mpT">0:00</span></div>
+<div class="pbox" id="pbox" hidden><img id="pimg" alt=""><p class="pn" id="pname"></p><p id="pwords" hidden></p></div>
+
+<script>
+(function(){
+  /* >>> put your folder image's file name between the quotes (PNG or JPG; a white background is removed automatically) <<< */
+  var PREVIEW=false,FOLDER_SRC='FOLDERCOM.jpg',FOLDER_URL='FOLDERCOM.jpg';
+  var PCOL=['#c9341f','#2c3f8f','#e8742f','#5f9e77','#7a1f12','#3b3a37','#cf2f5a','#8b6b44','#2f5a32','#e8e048','#6b5fb5','#d9a02f','#1b6f8a','#a3281a'];
+  function phImg(n,bg,shape){
+    n=String(n).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    var sv='<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="600" height="800" fill="'+bg+'"/>'+(shape?'<ellipse cx="300" cy="380" rx="190" ry="130" fill="#222"/><rect x="190" y="470" width="220" height="40" rx="8" fill="#b33"/>':'<rect x="110" y="150" width="380" height="500" fill="rgba(255,255,255,.28)"/>')+'<text x="300" y="730" font-family="Courier New,monospace" font-weight="700" font-size="30" text-anchor="middle" fill="'+(shape?'#111':'#fff')+'">'+n+'</text></svg>';
+    return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(sv)));
+  }
+  function pvTile(o){var c={},k,h=0,i;for(k in o)c[k]=o[k];for(i=0;i<o.n.length;i++)h+=o.n.charCodeAt(i);c.img=phImg(o.n,o.cut?'#ffffff':PCOL[h%PCOL.length],!!o.cut);return c}
+  var INK="#151313";
+  /* the logo, drawn inline everywhere it appears */
+  var SH='<ellipse class="logo-fill" cx="190" cy="138" rx="188" ry="136" transform="rotate(6 190 138)"/><ellipse class="logo-hole" cx="232" cy="64" rx="112" ry="34" transform="rotate(15 232 64)"/><ellipse class="logo-hole" cx="89" cy="136" rx="68" ry="60" transform="rotate(25 89 136)"/><ellipse class="logo-hole" cx="250" cy="190" rx="96" ry="64" transform="rotate(-20 250 190)"/><path class="logo-notch" d="M22 84 L44 66"/><ellipse class="logo-dot" cx="184" cy="122" rx="12" ry="9"/>';
+  var S=function(x){return '<svg viewBox="0 0 120 120" aria-hidden="true">'+x+'</svg>'};
+  var LOGO=function(bg,fill){return '<svg viewBox="0 0 380 277" style="--page:'+bg+';--logo:'+(fill||INK)+'" aria-hidden="true">'+SH+'</svg>'};
+
+  /* ---------- garment drawings (swap with real images via `img`) ---------- */
+  var tee=function(b,t,m){return S('<path d="M30 20 L48 12 Q60 22 72 12 L90 20 L112 42 L98 54 L88 46 L88 104 L32 104 L32 46 L22 54 L8 42 Z" fill="'+b+'"/><path d="M48 12 Q60 22 72 12" fill="none" stroke="'+t+'" stroke-width="4"/><path d="M8 42 L22 54 M112 42 L98 54" stroke="'+t+'" stroke-width="4"/><rect x="46" y="50" width="28" height="4" fill="'+m+'"/>')};
+  var crew=function(sl,b,c,m){return S('<path d="M32 16 Q60 28 88 16 L112 38 L108 98 L94 98 L92 54 L90 106 L30 106 L28 54 L26 98 L12 98 L8 38 Z" fill="'+sl+'"/><path d="M34 18 Q60 30 86 18 L92 54 L90 106 L30 106 L28 54 Z" fill="'+b+'"/><path d="M34 18 Q60 30 86 18" fill="none" stroke="'+c+'" stroke-width="5"/>'+(m||''))};
+  var hood=function(b,p,h){return S('<path d="M32 22 L8 40 L12 98 L26 98 L28 56 L30 106 L90 106 L92 56 L94 98 L108 98 L112 40 L88 22 Z" fill="'+b+'"/><path d="M36 22 Q60 -4 84 22 Q60 38 36 22Z" fill="'+h+'"/><path d="M38 74 L82 74 L86 98 L34 98Z" fill="'+p+'"/><rect x="52" y="82" width="16" height="4" fill="'+b+'"/>')};
+  var bShape=function(c,x,y,s,band){return '<g transform="translate('+x+' '+y+') scale('+s+')"><path d="M4 56 Q-2 8 30 3 Q62 8 56 56Z" fill="'+c+'"/><rect x="3" y="48" width="54" height="9" fill="'+(band||'rgba(0,0,0,.25)')+'"/></g>'};
+  var beanie=function(c,band){return S(bShape(c,18,24,1.4,band))};
+  var gloves=function(c,d){var g=function(x){return '<g transform="translate('+x+' 10)"><rect x="6" y="52" width="40" height="44" rx="12" fill="'+c+'"/><rect x="8" y="12" width="9" height="46" rx="4.5" fill="'+c+'"/><rect x="19" y="4" width="9" height="52" rx="4.5" fill="'+c+'"/><rect x="30" y="10" width="9" height="48" rx="4.5" fill="'+c+'"/><rect x="40" y="26" width="8" height="34" rx="4" fill="'+c+'"/><rect x="6" y="64" width="40" height="8" fill="'+d+'" opacity=".8"/></g>'};return S(g(-2)+g(62))};
+  var pants=function(c){return S('<path d="M36 8 L84 8 L92 110 L66 110 L60 42 L54 110 L28 110 Z" fill="'+c+'"/><rect x="36" y="8" width="48" height="6" fill="rgba(0,0,0,.18)"/>')};
+  var jacket=function(b,z){return S('<path d="M34 14 L52 10 L60 22 L68 10 L86 14 L112 40 L108 104 L94 104 L92 56 L90 108 L30 108 L28 56 L26 104 L12 104 L8 40 Z" fill="'+b+'"/><path d="M60 22 L60 108" stroke="'+z+'" stroke-width="3"/><rect x="38" y="58" width="14" height="3" fill="'+z+'"/>')};
+  var duo=function(f,b){return S('<g transform="translate(-14 4) scale(.62)">'+f+'</g><g transform="translate(44 4) scale(.62)">'+f+'</g>')};
+  var inner=function(svg){return svg.replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'')};
+
+  var beanies=S(bShape('#fff2bd',4,6,1.3,'#f1d9d9')+bShape('#d94a3a',66,6,1.3,'#2b2b2b')+bShape('#6fb93a',36,34,1.3,'#2b2b2b')+bShape('#3b3a37',4,58,1.3,'#7bd13c')+bShape('#4d1b10',46,78,1.3,'#f0a53a'));
+  var beaniesBig='<svg viewBox="0 0 120 120">'+inner(beanies)+'</svg>';
+
+  /* ---------- item registry ---------- */
+  var REG=[];
+  function reg(o){REG.push(o);return REG.length-1}
+  function btn(o,cls,style){if(PREVIEW&&o.img)o=pvTile(o);var i=reg(o);return '<button class="item '+(cls||'')+'" data-i="'+i+'" aria-label="'+o.n+'"'+(style?' style="'+style+'"':'')+'>'+(o.img?'<img src="'+encodeURI(o.img)+'" alt="'+o.n+'">':o.art)+'</button>'}
+
+  function ph(label,bg,mark){return '<div class="ph" style="background:'+bg+';--page:'+bg+'">'+(mark?LOGO(bg):'')+'<span>'+label+'</span></div>'}
+
+  var G=[
+    {n:'SLDR RINGER TEE',art:tee('#666867','#d6e44a','#e7892f')},
+    {n:'SLDR BEANIE-COLLECTION',art:beaniesBig},
+    {n:'SLDR WORK GLOVES',art:gloves('#dd6c45','#2b2b2b')},
+    {n:'SLDR SELF-WAR TEE',art:tee('#5f9e77','#d93a31','#243b2a')},
+    {n:'SLDR SWEATPANTS',art:pants('#1a2fe0')},
+    {n:'SLDR STUDIO CREWNECK',art:crew('#1b2347','#e8742f','#e6e6e6','<rect x="44" y="52" width="32" height="5" fill="#151313"/>')},
+    {n:'SLDR PORTRAIT CREWNECK',art:crew('#3d5a2a','#e1d94a','#e6e6e6','<rect x="42" y="46" width="14" height="18" fill="#9a8a6a"/><rect x="62" y="46" width="14" height="18" fill="#8a7f60"/>')},
+    {n:'SLDR RAGLAN',art:crew('#d6df48','#3b3b39','#47a84a','<rect x="46" y="48" width="28" height="3" fill="#e6402f"/>')},
+    {n:'SLDR PHOTO GLOVES',art:gloves('#1b1b1b','#9a8a6a')},
+    {n:'SLDR PANEL JACKET',art:hood('#b9b6ae','#e3a15a','#2b2b2b')},
+    {n:'TWENTYSIVE HOODIE',art:hood('#e1d24a','#233a7c','#233a7c')},
+    {n:'TWENTYSIVE CROP TOP',art:crew('#cf4a2f','#d9e050','#cf4a2f','<rect x="40" y="52" width="40" height="8" fill="#cf2f2f"/>')},
+    {n:'SLDR TRACK JACKETS',art:duo(inner(jacket('#161616','#cf2f2f')))},
+    {n:'SLDR UTILITY JACKETS',art:duo(inner(jacket('#bdb39a','#8a8168')))},
+    {n:'SLDR NAVY JACKET',art:jacket('#162a4d','#cf2f2f')}
+  ];
+
+  var deck=function(a,b,c){return '<svg viewBox="0 0 40 120" aria-hidden="true"><rect x="2" y="2" width="36" height="116" rx="17" fill="'+a+'"/><rect x="12" y="36" width="16" height="48" fill="'+b+'" opacity=".9"/><circle cx="12" cy="14" r="1.4" fill="'+c+'"/><circle cx="28" cy="14" r="1.4" fill="'+c+'"/><circle cx="12" cy="106" r="1.4" fill="'+c+'"/><circle cx="28" cy="106" r="1.4" fill="'+c+'"/></svg>'};
+  var decks='<svg viewBox="0 0 150 120" aria-hidden="true"><g transform="translate(0 0)">'+inner(deck('#8b6b44','#c9b48a','#222')).replace(/^/,'')+'</g></svg>';
+  var deckTrio='<svg viewBox="0 0 130 120" aria-hidden="true"><g>'+inner(deck('#8b6b44','#c9b48a','#222'))+'</g><g transform="translate(46 0)">'+inner(deck('#5c6150','#e4e04a','#222'))+'</g><g transform="translate(92 0)">'+inner(deck('#3fb23a','#e9e24a','#222'))+'</g></svg>';
+  var holder=function(c,w){return '<svg viewBox="0 0 120 90" aria-hidden="true"><rect x="6" y="8" width="108" height="76" rx="8" fill="'+c+'"/><path d="M12 32 Q40 24 70 32 T114 30 M12 48 Q40 40 70 48 T114 46 M12 64 Q40 56 70 64 T114 62" fill="none" stroke="'+w+'" stroke-width="1.2"/></svg>'};
+
+  /* ---------- pages ---------- */
+  var pages={
+    garments:function(){
+      /* file names must match the files in the GARMENTS folder exactly (capitals count) */
+      var F='GARMENTS/';
+      var list=[
+        ['atwarringer.png','SLDR RINGER TEE'],['Beanies.png','SLDR BEANIE-COLLECTION'],['GLOVE01-Recovered.png','SLDR WORK GLOVES'],['SANKARARINGER.png','SLDR SELF-WAR TEE'],
+        ['customsweats.png','SLDR SWEATPANTS'],['raglan01.png','SLDR STUDIO CREWNECK'],['RAGLAN2.png','SLDR PORTRAIT CREWNECK'],['raglanls01.png','SLDR RAGLAN'],
+        ['sldrojglovesNOMERGELAYERS.png','SLDR PHOTO GLOVES'],['BasquiatWB-1.png','SLDR PANEL JACKET'],['HOOD1.png','TWENTYSIVE HOODIE'],['selfwarqzip1.png','TWENTYSIVE ZIP TOP'],
+        ['bikerjacket01.png','SLDR BIKER JACKETS'],['SLDRTECHJACK011.png','SLDR TECH JACKET'],['Sldrsportzipwomen.png','SLDR SPORT ZIP'],['familybusiness.png','SLDR FAMILY BUSINESS RAGLAN']
+      ];
+      var h='<div class="wrap"><div class="tag">GARMENTS</div><div class="grid g-garments">';
+      list.forEach(function(a){h+=btn({n:a[1],img:F+a[0],cut:(a[0]==='Beanies.png'?'gentle':/^(raglan|familybusiness)/i.test(a[0])?'raglan':'strong')},'tall')});
+      h+='</div>';
+      /* objects: [file, name, width in px] */
+      var obj=[['DECKS.png','SLDR SKATE DECKS',330],['Untitled-1.png','SLDR CARDHOLDER',460],['LIGHTER.png','SLDR LIGHTER',260]];
+      h+='<section class="sec"><div class="tag">OBJECTS</div><div class="objs">';
+      obj.forEach(function(a){h+=btn({n:a[1],img:F+a[0],cut:(a[0]==='Untitled-1.png'?'gentlehull':a[0]==='LIGHTER.png'?'hull':true)},'obj','--ow:'+a[2]+'px')});
+      h+='</div></section></div>';
+      return h;
+    },
+    posters:function(){
+      /* file names must match the files in the POSTERS folder exactly. The .psd files cannot show on a website: in Photoshop use File > Export > Export As > PNG with the same name */
+      var F='POSTERS/';
+      var list=[['25FAMILYB.png','25 FAMILY BUSINESS'],['SLDRselfwarposter.png','SLDR SELF-WAR POSTER'],['Untitled-2.png','25 SOUND SYSTEM',1]];
+      var h='<div class="wrap"><div class="tag">POSTERS</div><div class="grid g-posters">';
+      list.forEach(function(a){h+=btn({n:a[1],img:F+a[0],cut:a[2]?false:true},'tall')});
+      return h+'</div></div>';
+    },
+    identity:function(){
+      /* the two plaques (no background) live in the IDENTITY folder: preview.webp = name plate, preview (1).webp = 25 ARCHIVE plate */
+      return '<div class="wrap"><div class="tag">IDENTITY</div><div class="plq">'+
+        '<button class="plq-b" type="button" aria-label="Open identity"><img src="IDENTITY/preview.webp" alt="Carel Gumuyire"></button>'+
+        '<button class="plq-b" type="button" aria-label="Open identity"><img src="IDENTITY/preview%20(1).webp" alt="25 Archive"></button>'+
+        '</div></div>';
+    },
+    illustrations:function(){
+      /* file names must match the files in the ILLUSTRATIONS folder exactly (capitals and spaces count) */
+      var F='ILLUSTRATIONS/';
+      /* ring order = the Readymag order, row 1 then row 2 */
+      var ring=[
+        ['okhaiposter.jpg','OKHAI POSTER'],['snakeranch.jpg','SNAKE RANCH'],['riots.jpg','PRAY FOR PARIS'],['NAIJA.jpg','NAIJA'],['cutout.jpg','CUTOUT'],['CHURCHOFLIGHT.jpg','CHURCH OF LIGHT'],['belly.jpg','BELLY'],
+        ['gunnv2.jpg','GUNN'],['MIGUELADROVA.jpg','MIGUEL ADROVA'],['BENZRINE.jpg','BENZRINE R129'],['YEXCUDI.png','YE CUDI'],['KD.jpg','KD'],['YZYSZN1.png','YZY SZN'],['GORBACHEV X LV.png','GORBACHEV X LV']
+      ];
+      var h='<div class="wrap wide"><div class="tag">ILLUSTRATIONS</div><div class="ring-stage" id="ringStage"><div class="ring" id="ring">';
+      ring.forEach(function(a,i){h+=btn({n:a[1],img:F+a[0]},'rc','--i:'+i)});
+      h+='</div></div>';
+      /* concepts: spaced for a closer look; popups remove the white background */
+      var concepts=[
+        ['SLAWN X PRADA.jpg','SLAWN X PRADA'],['SLADAMULES.jpg','SLADA MULES'],['SLADAUMBRELLABW.jpg','SLADA UMBRELLA BW'],['SLADAUMBRELLARED.jpg','SLADA UMBRELLA RED'],['SLADAUMBRELLA.jpg','SLADA UMBRELLA'],
+        ['SLADABIFOLDWALLET.png','SLADA BIFOLD WALLET']
+      ];
+      h+='<section class="concepts"><div class="tag">CONCEPTS</div><p class="lbl">PRADA X SLAWN</p><div class="cgrid">';
+      concepts.forEach(function(a){h+=btn({n:a[1],img:F+a[0],cut:true})});
+      return h+'</div></section></div>';
+    },
+    people:function(){
+      /* file names must match the files in the PEOPLE folder exactly. words: the text shown under the photo in the popup (empty for now) */
+      var F='PEOPLE/';
+      var list=[
+        ['ABLOH.jpg','VIRGIL ABLOH','Architecture \u00b7 Culture \u00b7 Design \u00b7 Disruption\nFounder of OFF-WHITE / Former Artistic Director of Louis Vuitton Menswear'],
+        ['AUS TAYLOR.jpg','AUS TAYLOR','Identity \u00b7 Image \u00b7 Sound \u00b7 Vision\nCreative Director'],
+        ['RICK.jpg','RICK RUBIN','Minimalism \u00b7 Instinct \u00b7 Sound \u00b7 Philosophy\nMusic Producer'],
+        ['SLAWN.jpg','SLAWN','Art \u00b7 Chaos \u00b7 Culture \u00b7 Expression\nContemporary Artist'],
+        ['YE.jpeg','KANYE WEST','Vision \u00b7 Sound \u00b7 Fashion \u00b7 Sampling\nArtist & Creative Director']
+      ];
+      var h='<div class="wrap ppl"><h1 class="ptitle">MY CREATIVE REFERENCES</h1><div class="plist">';
+      list.forEach(function(a){h+=btn({n:a[1],img:F+a[0],words:a[2]},'pimg')});
+      h+='</div><section class="others"><div class="tag">OTHERS</div><p>Ian Connor \u00b7 Mowalola \u00b7 Demna \u00b7 Nigo</p></section>';
+      return h+'</div>';
+    }
+  };
+
+  /* folders shown under each landing-page label */
+  var FOLDERS={l:[['Illustrations','illustrations'],['People','people']],r:[['Garments','garments'],['Posters','posters'],['Identity','identity']]};
+  var fid=0;
+  function folderImg(){return '<img src="'+FOLDER_URL+'" alt="" draggable="false">'}
+  function mainPage(){
+    var m=function(side,label){
+      return '<div class="menu" data-menu="'+side+'"><button class="label" aria-expanded="false" aria-controls="fm">'+label+'</button></div>';
+    };
+    return '<section class="main">'+m('l','ARCHIVE')+
+      '<div class="logo"><img src="Sldrlogo.png" alt="25Archive logo"></div>'+
+      m('r','SLDR')+'</section><div class="num">25</div>';
+  }
+
+  /* ---------- illustrations ring: rotates anti-clockwise, drag to spin, hover to pause ---------- */
+  var ringStop=null;
+  function stopRing(){if(ringStop){ringStop();ringStop=null}}
+  function initRing(){
+    var st=document.getElementById('ringStage'),ring=document.getElementById('ring');
+    if(!st||!ring)return;
+    var n=ring.children.length,R=0,ang=0,vel=0,drag=false,lx=0,lt=0,moved=0,hover=false,raf=0,last=performance.now();
+    var SPEED=matchMedia('(prefers-reduced-motion: reduce)').matches?0:11; /* degrees per second, positive = anti-clockwise seen from above */
+    function size(){
+      var W=st.clientWidth,cw=Math.max(96,Math.min(230,W*0.19));
+      R=(cw/2)/Math.tan(Math.PI/n)*1.22;
+      st.style.setProperty('--cw',cw+'px');ring.style.setProperty('--R',R+'px');ring.style.setProperty('--step',(360/n)+'deg');
+      st.style.height=Math.round(cw*1.3333*1.16)+'px';
+    }
+    function frame(t){
+      var dt=Math.min(.05,(t-last)/1000);last=t;
+      if(!drag){vel+=((hover?0:SPEED)-vel)*Math.min(1,dt*3)}
+      ang+=vel*dt;
+      ring.style.transform='translateZ('+(-R)+'px) rotateY('+ang+'deg)';
+      raf=requestAnimationFrame(frame);
+    }
+    function down(e){if(e.button>0)return;drag=true;moved=0;lx=e.clientX;lt=performance.now();st.classList.add('drag')}
+    function move(e){
+      if(!drag)return;
+      var now=performance.now(),dx=e.clientX-lx,dtm=Math.max(1,now-lt);lx=e.clientX;lt=now;moved+=Math.abs(dx);
+      ang+=dx*0.32;vel=Math.max(-240,Math.min(240,dx*0.32/(dtm/1000)));
+    }
+    function up(){if(!drag)return;drag=false;st.classList.remove('drag')}
+    function over(e){hover=!!e.target.closest('.rc')}
+    function leave(){hover=false}
+    function click(e){if(moved>6){e.stopPropagation();e.preventDefault();moved=0}}
+    size();raf=requestAnimationFrame(frame);
+    st.addEventListener('pointerdown',down);window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+    st.addEventListener('pointerover',over);st.addEventListener('pointerleave',leave);st.addEventListener('click',click,true);window.addEventListener('resize',size);
+    ringStop=function(){cancelAnimationFrame(raf);window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);window.removeEventListener('resize',size)};
+  }
+
+  /* ---------- music: put your mp3 files in a MUSIC folder next to index.html and list them here ---------- */
+  var TRACKS=[
+    'tunes/fatherstretch.mp3',
+    'tunes/New_Slaves.mp3',
+    'tunes/nights.mp3',
+    'tunes/Otis.mp3',
+    'tunes/letithappen.mp3',
+    'tunes/astrothunder.mp3',
+    'tunes/daddysbirthday.aac',
+    'tunes/lifeofpablo.mp3'
+  ];
+  var mp=document.getElementById('mp'),mpBtn=document.getElementById('mpBtn'),mpT=document.getElementById('mpT');
+  var ICON_PLAY='<svg viewBox="0 0 12 12" width="20" height="20" aria-hidden="true"><path d="M2.3 1 11 6 2.3 11Z" fill="#fff"/></svg>';
+  var ICON_PAUSE='<svg viewBox="0 0 12 12" width="20" height="20" aria-hidden="true"><rect x="2" y="1.4" width="3" height="9.2" fill="#fff"/><rect x="7" y="1.4" width="3" height="9.2" fill="#fff"/></svg>';
+  var audio=new Audio(),ti=0,listened=0,tick=0,tickAt=0;
+  if(PREVIEW){var LS={};TRACKS=['demo'];audio={paused:true,src:'demo',addEventListener:function(n,f){(LS[n]=LS[n]||[]).push(f)},play:function(){this.paused=false;(LS.play||[]).forEach(function(f){f()});return Promise.resolve()},pause:function(){this.paused=true;(LS.pause||[]).forEach(function(f){f()})}}}
+  function fmt(x){x=Math.floor(x);return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2)}
+  function showBtn(on){mpBtn.innerHTML=on?ICON_PAUSE:ICON_PLAY;mpBtn.setAttribute('aria-label',on?'Pause':'Play')}
+  function loadTrack(i){ti=(i+TRACKS.length)%TRACKS.length;audio.src=encodeURI(TRACKS[ti])}
+  audio.addEventListener('play',function(){showBtn(true);tickAt=performance.now();clearInterval(tick);tick=setInterval(function(){var t=performance.now();listened+=(t-tickAt)/1000;tickAt=t;mpT.textContent=fmt(listened)},250)});
+  audio.addEventListener('pause',function(){showBtn(false);clearInterval(tick)});
+  audio.addEventListener('ended',function(){loadTrack(ti+1);audio.play()});
+  mpBtn.addEventListener('click',function(){
+    if(!TRACKS.length)return;
+    if(!audio.src)loadTrack(0);
+    if(audio.paused){var p=audio.play();if(p&&p.catch)p.catch(function(){})}else audio.pause();
+  });
+  showBtn(false);
+  /* volume: small speaker button before the time, opens a vertical translucent slider */
+  var mpV=document.getElementById('mpV'),mpVb=document.getElementById('mpVb'),mpVp=document.getElementById('mpVp'),mpVt=document.getElementById('mpVt'),mpVf=document.getElementById('mpVf'),mpVk=document.getElementById('mpVk'),vol=0.8;
+  function volIcon(){var w=vol===0?'<path d="M14.5 8.5l5 5M19.5 8.5l-5 5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/>':vol<0.5?'<path d="M14.5 8.8c1.2 1.2 1.2 3.2 0 4.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/>':'<path d="M14.5 8.8c1.2 1.2 1.2 3.2 0 4.4M16.6 6.8c2.4 2.4 2.4 6.4 0 8.8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/>';
+    mpVb.innerHTML='<svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true"><path d="M3 8.2h3.4L11 4.4v13.2l-4.6-3.8H3z" fill="#fff"/>'+w+'</svg>'}
+  function setVol(v){vol=Math.max(0,Math.min(1,v));try{audio.volume=vol}catch(e){}mpVf.style.height=(vol*100)+'%';mpVk.style.bottom=(vol*100)+'%';volIcon()}
+  function volFrom(e){var b=mpVt.getBoundingClientRect();setVol(1-(e.clientY-b.top)/b.height)}
+  mpVb.addEventListener('click',function(e){e.stopPropagation();mpVp.classList.toggle('on')});
+  mpVp.addEventListener('pointerdown',function(e){e.stopPropagation();mpVp.setPointerCapture(e.pointerId);volFrom(e);mpVp._d=1});
+  mpVp.addEventListener('pointermove',function(e){if(mpVp._d)volFrom(e)});
+  mpVp.addEventListener('pointerup',function(){mpVp._d=0});
+  mpVp.addEventListener('pointercancel',function(){mpVp._d=0});
+  document.addEventListener('click',function(e){if(!mpV.contains(e.target))mpVp.classList.remove('on')});
+  setVol(0.8);
+
+  /* ---------- router with in-site history ---------- */
+  var view=document.getElementById('view'),right=document.getElementById('right');
+  var stack=[];
+  function route(){var h=(location.hash||'').replace('#','');return (h==='main'||pages[h])?h:'main'}
+  function render(){
+    var r=route();
+    REG.length=0;closePop();closeFm();
+    document.body.dataset.page=r;
+    if(r==='main'){view.innerHTML=mainPage();right.textContent='Portfolio';right.className='r';right.removeAttribute('role');right.removeAttribute('tabindex');document.querySelector('.mini').style.display='none'}
+    else{view.innerHTML='<section class="sub">'+pages[r]()+'</section>';right.textContent='BACK';right.className='r is-back';right.setAttribute('role','button');right.setAttribute('tabindex','0');document.querySelector('.mini').style.display=''}
+    window.scrollTo(0,0);
+    stopRing();if(r==='illustrations')initRing();
+    if(r==='people')view.querySelectorAll('.item.pimg img').forEach(function(im){var s0=im.getAttribute('src');corners(s0,function(u){if(u!==s0)im.src=u})});
+  }
+  window.addEventListener('hashchange',function(){
+    var r=route();
+    if(r==='garments'&&!unlocked){location.replace('#main');return}
+    if(stack.length>1&&stack[stack.length-2]===r)stack.pop();else stack.push(r);
+    render();
+  });
+  function goBack(){if(stack.length>1)history.back();else location.hash='main'}
+  right.addEventListener('click',function(){if(right.classList.contains('is-back'))goBack()});
+  right.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&right.classList.contains('is-back')){e.preventDefault();goBack()}});
+
+  /* folder menu */
+  var fm=document.getElementById('fm'),fmRow=document.getElementById('fmRow'),fmSide=null;
+  function closeFm(){
+    if(fm.hidden)return;
+    fm.hidden=true;fmSide=null;
+    document.querySelectorAll('.menu').forEach(function(m){m.classList.remove('open');m.firstChild.setAttribute('aria-expanded','false')});
+  }
+  function openFm(side){
+    fid=0;
+    var L=FOLDERS[side],cnt=L.length,fw=Math.max(96,Math.min(180,innerWidth*0.13)),sx=fw*1.02,sy=fw*0.4,sz=fw*0.62;
+    fmRow.innerHTML=L.map(function(f,i){var off=i-(cnt-1)/2;return '<a href="#'+f[1]+'" style="--n:'+i+';--fw:'+fw+'px;--x:'+Math.round(off*sx)+'px;--y:'+Math.round(-off*sy)+'px;--z:'+Math.round(-i*sz)+'px">'+folderImg()+'<span class="nm">'+f[0]+'</span></a>'}).join('');
+    var m=document.querySelector('.menu[data-menu="'+side+'"]');
+    m.classList.add('open');m.firstChild.setAttribute('aria-expanded','true');
+    fm.hidden=false;fmSide=side;
+  }
+  /* garments password. NOTE: this is a front-door only (the word sits in this file); change it here */
+  var PASSWORD='two5ivee',unlocked=false,pwEl=document.getElementById('pw'),pwI=document.getElementById('pwI'),pwT=document.getElementById('pwT'),pwL=document.getElementById('pwL'),pwNext=null;
+  try{unlocked=sessionStorage.getItem('g25')==='1'}catch(e){}
+  function pwClose(){pwEl.classList.remove('on');document.body.classList.remove('popup');document.body.style.overflow='';pwNext=null;pwI.value=''}
+  function askPw(next){pwNext=next;pwL.textContent='Enter password';pwI.value='';document.body.classList.add('popup');document.body.style.overflow='hidden';pwEl.classList.add('on');setTimeout(function(){pwI.focus()},30)}
+  pwI.addEventListener('keydown',function(e){
+    if(e.key!=='Enter')return;
+    if(pwI.value===PASSWORD){unlocked=true;try{sessionStorage.setItem('g25','1')}catch(x){}var n=pwNext;pwClose();if(n)n()}
+    else{pwL.textContent='Wrong password';pwI.value='';pwT.classList.remove('bad');void pwT.offsetWidth;pwT.classList.add('bad')}
+  });
+  pwEl.addEventListener('click',function(e){if(!e.target.closest('.pw-tab'))pwClose()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&pwEl.classList.contains('on'))pwClose()});
+  /* identity popup: blurred, scrollable */
+  /* photos for the identity popup: ['IDENTITY/photo-name.jpg'] (add yours here, they show in this order under the paragraph) */
+  var IDENTITY_IMAGES=['IDENTITY/IDENTITYV2.png'];
+  var idp=document.getElementById('idp'),idc=document.getElementById('idc'),idTok=0;
+  function openId(){
+    var my=++idTok,h='';
+    h+='<h1 class="idb idt">IDENTITY</h1>';
+    h+='<p class="idb idpara">SLDR STUDIOS originated from a deep interest in understanding and becoming part of streetwear and skate culture, which later evolved into a medium for the owner and members of the SLDR community to express their individual tastes through the introduction of technical and archival garments. SLDR approaches garments and brand objects as mediums of expression, communicating ideas beyond the product itself. At its core lies the philosophy \u201cUNDEREXECUTION DOES NOT LIMIT THE IMMENSITY OF THE IDEA,\u201d a principle that also forms a fundamental part of the owner\u2019s personal design system. NOTFORTHEM does not necessarily represent exclusivity, but rather an understanding of individual taste and expression within and beyond the SLDR world.</p>';
+    if(IDENTITY_IMAGES.length){h+='<div class="idb idimgs">';IDENTITY_IMAGES.forEach(function(p){h+='<img src="'+encodeURI(p)+'" alt="">'});h+='</div>'}
+    h+='<div class="idb idlogo"><img src="Sldrlogo.png" alt="SLDR logo"></div>';
+    h+='<div class="idb idg"><img src="IDENTITY/IDENTITYV1.png" alt="Identity"></div>';
+    h+='<div class="idb idd">'+
+      '<p>BRAND: SLDR STUDIOS<br>TWENTY5IVE STUDIOS<br>OWNER AND CREATOR: CAREL GUMUYIRE</p>'+
+      '<p>BASED: KIGALI, RW<br>ONTARIO, CA</p>'+
+      '<p><span class="big2">NOTFORTHEM</span><br><span class="mid">EST-2025</span></p>'+
+      '<p>CREATION FRAME: FALL 2025<br>STATUS: PRE-LAUNCH</p>'+
+      '<p>RELEASED PRODUCT:<br>IN COLLABORATION WITH DUESPACE<br>FOR MORE DETAILS VISIT 25ARCHIVE</p>'+
+      '</div>';
+    idc.innerHTML=h;idp.scrollTop=0;
+    document.body.classList.add('popup');document.body.style.overflow='hidden';idp.classList.add('on');
+  }
+  function closeId(){if(!idp.classList.contains('on'))return;idTok++;idp.classList.remove('on');idc.innerHTML='';document.body.classList.remove('popup');document.body.style.overflow=''}
+  idp.addEventListener('click',function(e){if(!e.target.closest('.idb'))closeId()});
+  document.getElementById('idx').addEventListener('click',closeId);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeId()});
+  view.addEventListener('click',function(e){
+    if(e.target.closest('.plq-b')){openId();return}
+    var lab=e.target.closest('.label');
+    if(lab){var side=lab.parentNode.dataset.menu,same=(fmSide===side);closeFm();if(!same)openFm(side);return}
+    var it=e.target.closest('.item');
+    if(it)openPop(+it.dataset.i,it);
+  });
+  fm.addEventListener('click',function(e){
+    var ga=e.target.closest('.fm-stack a');
+    if(ga&&ga.getAttribute('href')==='#garments'&&!unlocked){e.preventDefault();closeFm();askPw(function(){location.hash='garments'});return}
+    if(!ga)closeFm()});
+
+  /* popup */
+  var pop=document.getElementById('pop'),card=document.getElementById('card'),art=document.getElementById('popArt'),cap=document.getElementById('popCap'),lastFocus=null;
+  var big=document.getElementById('big'),pbox=document.getElementById('pbox'),pimg=document.getElementById('pimg'),pw=document.getElementById('pwords'),pnm=document.getElementById('pname'),cache={},token=0;
+
+  /* Removes the white background around a garment so only the garment floats over the blurred page.
+     Only white connected to the image edge is removed (white inside the garment stays), then a thin
+     light fringe is trimmed so no white outline trails around it. */
+  function cutout(src,mode,cb){
+    var hullM=(mode==='hull'||mode==='gentlehull'),gentle=(mode==='gentle'||mode==='gentlefill'||mode==='raglan'||mode==='gentlehull'),strong=(mode===true||mode==='strong')?mode==='strong':false,fillMin=mode==='raglan'?0.07:(mode==='gentlefill'?0.03:0);
+    var key=src+'|'+mode;
+    if(cache[key]){cb(cache[key].u,cache[key].fb);return}
+    var im=new Image();
+    im.onload=function(){
+      var res;
+      try{
+        var c=document.createElement('canvas'),w=c.width=im.naturalWidth,h=c.height=im.naturalHeight,x=c.getContext('2d');
+        x.fillStyle='#fff';x.fillRect(0,0,w,h); /* transparent parts count as white */
+        x.drawImage(im,0,0);
+        var d=x.getImageData(0,0,w,h),a=d.data,seen=new Uint8Array(w*h),st=[],i,p,px,py;
+        /* transparent PNGs: lay them on white first so hidden black pixels are not mistaken for ink */
+        for(i=0;i<w*h;i++){var al0=a[i*4+3];if(al0<255){var f=al0/255;a[i*4]=a[i*4]*f+255*(1-f);a[i*4+1]=a[i*4+1]*f+255*(1-f);a[i*4+2]=a[i*4+2]*f+255*(1-f);a[i*4+3]=255}}
+        var o=new Uint8ClampedArray(a);
+        var light=function(k,t){return a[k*4]>t&&a[k*4+1]>t&&a[k*4+2]>t};
+        /* strong (garment drawings, which have a dark outline): also removes the soft grey or cream glow around the garment */
+        var bgLike=function(k){
+          if(gentle){var q0=a[k*4],q1=a[k*4+1],q2=a[k*4+2];return q0>251&&q1>251&&q2>251&&Math.max(q0,q1,q2)-Math.min(q0,q1,q2)<5}
+          if(light(k,236))return true;
+          if(!strong)return false;
+          var r=a[k*4],g=a[k*4+1],bl=a[k*4+2];
+          return (r+g+bl)/3>195&&Math.max(r,g,bl)-Math.min(r,g,bl)<38;
+        };
+        var push=function(k){if(!seen[k]&&bgLike(k)){seen[k]=1;st.push(k)}};
+        for(i=0;i<w;i++){push(i);push((h-1)*w+i)}
+        for(i=0;i<h;i++){push(i*w);push(i*w+w-1)}
+        while(st.length){p=st.pop();px=p%w;py=(p-px)/w;a[p*4+3]=0;
+          if(px>0)push(p-1);if(px<w-1)push(p+1);if(py>0)push(p-w);if(py<h-1)push(p+w)}
+        /* white garment bodies with no outline: the flood fill leaks in through the open hem. Win them back:
+           a removed run is part of the garment when ink sits to its left AND right on the same row, there is ink
+           above it in the same column, and it is wide (a real body, not the small gap under an arm) */
+        var prot=new Uint8Array(w*h);
+        if(fillMin>0){
+          var minRun=Math.round(w*fillMin),hasUp=new Uint8Array(w),yy2,xx2,xs,xe;
+          for(yy2=0;yy2<h;yy2++){
+            var rowB=yy2*w;xx2=0;
+            while(xx2<w){
+              if(a[(rowB+xx2)*4+3]!==0){hasUp[xx2]=1;xx2++;continue}
+              xs=xx2;while(xx2<w&&a[(rowB+xx2)*4+3]===0)xx2++;xe=xx2-1;
+              if(xs>0&&xe<w-1&&xe-xs+1>=minRun){
+                for(var qx=xs;qx<=xe;qx++)if(hasUp[qx]){a[(rowB+qx)*4+3]=255;prot[rowB+qx]=1}
+              }
+            }
+          }
+        }
+        /* soft grey glow outside the garment outline: keep removing neutral, light pixels that touch the
+           removed area, stopping at the dark outline or at coloured fabric. Capped so a garment with no
+           outline can never be eaten away. */
+        var before=0,after=0;
+        for(p=0;p<w*h;p++)if(a[p*4+3]!==0)before++;
+        var snap=new Uint8ClampedArray(a),maxD=Math.max(w,h),fr=[];
+        var wall=function(k){var l=(a[k*4]+a[k*4+1]+a[k*4+2])/3;return l<150||(Math.max(a[k*4],a[k*4+1],a[k*4+2])-Math.min(a[k*4],a[k*4+1],a[k*4+2]))>55};
+        for(p=0;p<w*h;p++){if(a[p*4+3]!==0)continue;px=p%w;py=(p-px)/w;
+          if((px>0&&a[(p-1)*4+3])||(px<w-1&&a[(p+1)*4+3])||(py>0&&a[(p-w)*4+3])||(py<h-1&&a[(p+w)*4+3]))fr.push(p)}
+        var capD=mode==='raglan'?3:(gentle?0:maxD);
+        for(var dep=0;dep<capD&&fr.length;dep++){
+          var nx=[];
+          for(i=0;i<fr.length;i++){p=fr[i];px=p%w;py=(p-px)/w;
+            var nbs=[];if(px>0)nbs.push(p-1);if(px<w-1)nbs.push(p+1);if(py>0)nbs.push(p-w);if(py<h-1)nbs.push(p+w);
+            for(var z=0;z<nbs.length;z++){var q2=nbs[z];if(a[q2*4+3]!==0&&!prot[q2]&&!wall(q2)&&(mode!=='raglan'||((a[q2*4]+a[q2*4+1]+a[q2*4+2])/3>228&&Math.max(a[q2*4],a[q2*4+1],a[q2*4+2])-Math.min(a[q2*4],a[q2*4+1],a[q2*4+2])<10))){a[q2*4+3]=0;nx.push(q2)}}}
+          fr=nx;
+        }
+        for(p=0;p<w*h;p++)if(a[p*4+3]!==0)after++;
+        if(!gentle&&before-after>before*0.35){a.set(snap)} /* removed far too much: it was not glow, undo */
+        /* trim the light fringe next to the removed area, 3 passes */
+        for(var pass=0;pass<(gentle?0:(strong?6:3));pass++){
+          var kill=[];
+          for(p=0;p<w*h;p++){
+            if(a[p*4+3]===0||prot[p])continue;
+            px=p%w;py=(p-px)/w;
+            var nb=(px>0&&a[(p-1)*4+3]===0)||(px<w-1&&a[(p+1)*4+3]===0)||(py>0&&a[(p-w)*4+3]===0)||(py<h-1&&a[(p+w)*4+3]===0);
+            if(nb&&light(p,strong?185:200))kill.push(p);
+          }
+          for(i=0;i<kill.length;i++)a[kill[i]*4+3]=0;
+        }
+        /* lettering: if there is a small caption under the garment, rebuild it from how far each pixel is from
+           white (colour-to-alpha), so no white or pale halo is left around the letters or inside them (o, a, e...) */
+        var rows=new Uint8Array(h),bot=-1;
+        for(p=0;p<w*h;p++){if(a[p*4+3]!==0){py=(p/w)|0;rows[py]=1;if(py>bot)bot=py}}
+        if(hullM){
+          /* objects whose white parts touch the page (lighters, cardholder): find each big object, wrap it in its convex outline and win back every pixel inside */
+          var cs=Math.max(3,Math.round(Math.max(w,h)*0.012)),gw=Math.ceil(w/cs),gh=Math.ceil(h/cs),gr=new Uint8Array(gw*gh),gx,gy,tmp;
+          for(p=0;p<w*h;p++){if(a[p*4+3]>40){px=p%w;py=(p-px)/w;gr[((py/cs)|0)*gw+((px/cs)|0)]=1}}
+          for(var dl=0;dl<2;dl++){tmp=new Uint8Array(gw*gh);
+            for(gy=0;gy<gh;gy++)for(gx=0;gx<gw;gx++)if(gr[gy*gw+gx]){for(var ddy=-1;ddy<=1;ddy++)for(var ddx=-1;ddx<=1;ddx++){var ny=gy+ddy,nx=gx+ddx;if(ny>=0&&ny<gh&&nx>=0&&nx<gw)tmp[ny*gw+nx]=1}}
+            gr=tmp}
+          var lab=new Int32Array(gw*gh),nl=0,bb=[null],stk,cc;
+          for(cc=0;cc<gw*gh;cc++){if(!gr[cc]||lab[cc])continue;nl++;lab[cc]=nl;stk=[cc];var bx0=gw,bx1=0,by0=gh,by1=0;
+            while(stk.length){var cur=stk.pop(),cx=cur%gw,cy=(cur-cx)/gw;
+              if(cx<bx0)bx0=cx;if(cx>bx1)bx1=cx;if(cy<by0)by0=cy;if(cy>by1)by1=cy;
+              [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var nx=cx+d[0],ny=cy+d[1];if(nx<0||ny<0||nx>=gw||ny>=gh)return;var k=ny*gw+nx;if(gr[k]&&!lab[k]){lab[k]=nl;stk.push(k)}})}
+            var okObj=((bx1-bx0+1)*cs>=w*0.06)&&((by1-by0+1)*cs>=h*0.12);bb.push(okObj?{mn:new Int32Array(h).fill(1e9),mx:new Int32Array(h).fill(-1)}:null)}
+          for(p=0;p<w*h;p++){if(a[p*4+3]<=40)continue;px=p%w;py=(p-px)/w;var o=bb[lab[((py/cs)|0)*gw+((px/cs)|0)]];if(!o)continue;if(px<o.mn[py])o.mn[py]=px;if(px>o.mx[py])o.mx[py]=px}
+          bb.forEach(function(o){
+            if(!o)return;var pts=[],yy;
+            for(yy=0;yy<h;yy++)if(o.mx[yy]>=0){pts.push([o.mn[yy],yy]);if(o.mx[yy]!==o.mn[yy])pts.push([o.mx[yy],yy])}
+            if(pts.length<3)return;
+            pts.sort(function(m,n){return m[0]-n[0]||m[1]-n[1]});
+            var cr=function(O,A,B){return (A[0]-O[0])*(B[1]-O[1])-(A[1]-O[1])*(B[0]-O[0])},lo=[],up=[],i2;
+            for(i2=0;i2<pts.length;i2++){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],pts[i2])<=0)lo.pop();lo.push(pts[i2])}
+            for(i2=pts.length-1;i2>=0;i2--){while(up.length>=2&&cr(up[up.length-2],up[up.length-1],pts[i2])<=0)up.pop();up.push(pts[i2])}
+            lo.pop();up.pop();var H=lo.concat(up),n2=H.length;if(n2<3)return;
+            var ymin=1e9,ymax=-1;H.forEach(function(q){if(q[1]<ymin)ymin=q[1];if(q[1]>ymax)ymax=q[1]});
+            for(yy=ymin;yy<=ymax;yy++){var xl=1e9,xr=-1e9;
+              for(i2=0;i2<n2;i2++){var P1=H[i2],P2=H[(i2+1)%n2];
+                if((P1[1]<=yy&&P2[1]>=yy)||(P2[1]<=yy&&P1[1]>=yy)){
+                  if(P1[1]===P2[1]){xl=Math.min(xl,P1[0],P2[0]);xr=Math.max(xr,P1[0],P2[0])}
+                  else{var xx3=P1[0]+(yy-P1[1])*(P2[0]-P1[0])/(P2[1]-P1[1]);if(xx3<xl)xl=xx3;if(xx3>xr)xr=xx3}}}
+              for(var xx4=Math.ceil(xl);xx4<=Math.floor(xr);xx4++)a[(yy*w+xx4)*4+3]=255}
+          })
+        }
+        if(gentle){
+          /* soft edge: pixels touching the removed area fade by how close to white they are, so there is no torn or stair-stepped rim */
+          var fe=[];
+          for(p=0;p<w*h;p++){if(a[p*4+3]===0||prot[p])continue;px=p%w;py=(p-px)/w;
+            if((px>0&&a[(p-1)*4+3]===0)||(px<w-1&&a[(p+1)*4+3]===0)||(py>0&&a[(p-w)*4+3]===0)||(py<h-1&&a[(p+w)*4+3]===0))fe.push(p)}
+          for(i=0;i<fe.length;i++){p=fe[i];var mn2=Math.min(a[p*4],a[p*4+1],a[p*4+2]);a[p*4+3]=Math.round(255*Math.max(0.3,Math.min(1,(255-mn2)/45)))}
+        }
+        if(bot>0&&!gentle){
+          var G=Math.max(4,Math.round(h*0.005)),gp=0,start=-1,r;
+          for(r=bot;r>=0;r--){if(rows[r])gp=0;else{gp++;if(gp>=G){start=r+gp;break}}}
+          if(start>0&&(bot-start+1)<h*0.14){
+            var minX=w,maxX=-1,inkN=0,yy,xx,qq;
+            for(yy=start;yy<=bot;yy++)for(xx=0;xx<w;xx++){qq=(yy*w+xx)*4;if(a[qq+3]!==0){if(xx<minX)minX=xx;if(xx>maxX)maxX=xx;if(Math.min(o[qq],o[qq+1],o[qq+2])<225)inkN++}}
+            if(maxX>=minX&&inkN<(maxX-minX+1)*(bot-start+1)*0.4){
+              for(yy=Math.max(0,start-3);yy<=Math.min(h-1,bot+3);yy++)for(xx=Math.max(0,minX-4);xx<=Math.min(w-1,maxX+4);xx++){
+                var kk=(yy*w+xx)*4,mn=Math.min(o[kk],o[kk+1],o[kk+2]),a0=(255-mn)/255;
+                if(a0<0.04){a[kk+3]=0;continue}
+                var al=Math.min(1,(a0-0.04)/0.9);
+                for(var ci=0;ci<3;ci++){var vv=(o[kk+ci]-255*(1-a0))/a0;a[kk+ci]=vv<0?0:vv>255?255:vv}
+                a[kk+3]=al*255;
+              }
+            }
+          }
+        }
+        x.putImageData(d,0,0);
+        res={u:c.toDataURL('image/png'),fb:false};
+      }catch(e){res={u:src,fb:true}} /* pixel access blocked (file opened by double-click): blend the white away instead */
+      cache[key]=res;cb(res.u,res.fb);
+    };
+    im.onerror=function(){cb(src,true)};
+    im.src=src;
+  }
+
+
+  /* people photos: remove the black corner fill left by rounded-corner screenshots (only dark pixels joined to the corners) */
+  var ccache={};
+  function corners(src,cb){
+    if(ccache[src]){cb(ccache[src]);return}
+    var im=new Image();
+    im.onload=function(){
+      var out=src;
+      try{
+        var w=im.naturalWidth,h=im.naturalHeight,c=document.createElement('canvas');c.width=w;c.height=h;
+        var x=c.getContext('2d');x.drawImage(im,0,0);
+        var d=x.getImageData(0,0,w,h),a=d.data,seen=new Uint8Array(w*h),st=[],p,px,py,n=0,i;
+        var dark=function(k){return a[k*4+3]<20||Math.max(a[k*4],a[k*4+1],a[k*4+2])<70};
+        var sd=Math.round(Math.min(w,h)*0.12),cs=[[0,0],[w-1,0],[0,h-1],[w-1,h-1]];
+        var sd2=Math.min(sd,Math.max(w,h));
+        for(var bi=0;bi<sd2;bi++)for(var bj=0;bj<4;bj++){
+          [[bi,bj],[w-1-bi,bj],[bi,h-1-bj],[w-1-bi,h-1-bj],[bj,bi],[w-1-bj,bi],[bj,h-1-bi],[w-1-bj,h-1-bi]].forEach(function(q){
+            if(q[0]<0||q[1]<0||q[0]>=w||q[1]>=h)return;var k=q[1]*w+q[0];if(dark(k)&&!seen[k]){seen[k]=1;st.push(k)}})}
+        while(st.length){p=st.pop();px=p%w;py=(p-px)/w;
+          if(Math.min(px,w-1-px)>sd||Math.min(py,h-1-py)>sd)continue; /* corners only */
+          a[p*4+3]=0;n++;
+          var nb=[];if(px>0)nb.push(p-1);if(px<w-1)nb.push(p+1);if(py>0)nb.push(p-w);if(py<h-1)nb.push(p+w);
+          nb.forEach(function(q){if(!seen[q]&&dark(q)){seen[q]=1;st.push(q)}});}
+        if(n>0&&n<w*h*0.06){
+          for(var ps=0;ps<4;ps++){var kl=[];
+            for(p=0;p<w*h;p++){if(a[p*4+3]===0)continue;px=p%w;py=(p-px)/w;
+              if(Math.min(px,w-1-px)>sd+3||Math.min(py,h-1-py)>sd+3)continue;
+              var e=(px>0&&a[(p-1)*4+3]===0)||(px<w-1&&a[(p+1)*4+3]===0)||(py>0&&a[(p-w)*4+3]===0)||(py<h-1&&a[(p+w)*4+3]===0);
+              if(e&&Math.max(a[p*4],a[p*4+1],a[p*4+2])<135)kl.push(p)}
+            for(i=0;i<kl.length;i++)a[kl[i]*4+3]=0}
+          x.putImageData(d,0,0);out=c.toDataURL('image/png')}
+      }catch(e){}
+      ccache[src]=out;cb(out)};
+    im.onerror=function(){cb(src)};im.src=src;
+  }
+
+  function openPop(i,from){
+    var o=REG[i];if(!o)return;lastFocus=from;var my=++token;
+    document.body.style.overflow='hidden';document.body.classList.add('popup');pbox.hidden=true;
+    if(o.img&&o.words!==undefined){
+      pimg.src=encodeURI(o.img);corners(encodeURI(o.img),function(u){if(my===token)pimg.src=u});pimg.alt=o.n;pnm.textContent=o.n;pw.textContent=o.words;pw.hidden=!o.words;big.hidden=true;
+      pop.classList.add('bare');pop.hidden=false;pbox.hidden=false;
+    }else if(o.img&&o.cut){
+      cutout(encodeURI(o.img),o.cut,function(u,fb){
+        if(my!==token)return;
+        big.src=u;big.alt=o.n;big.classList.toggle('mul',fb);big.classList.remove('raw');
+        pop.classList.add('bare');pop.hidden=false;big.hidden=false;
+      });
+    }else if(o.img){
+      big.src=encodeURI(o.img);big.alt=o.n;big.classList.remove('mul');big.classList.add('raw');
+      pop.classList.add('bare');pop.hidden=false;big.hidden=false;
+    }else{
+      art.innerHTML=o.art;cap.textContent=o.n;
+      pop.classList.remove('bare');big.hidden=true;pop.hidden=false;card.focus();
+    }
+  }
+  function closePop(){token++;if(pop.hidden)return;pop.hidden=true;big.hidden=true;pbox.hidden=true;document.body.classList.remove('popup');document.body.style.overflow='';if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+  pop.addEventListener('click',function(e){if(pop.classList.contains('bare')||!card.contains(e.target))closePop()});
+  big.addEventListener('click',closePop);pbox.addEventListener('click',closePop);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closePop();closeFm()}});
+
+  FOLDER_URL=FOLDER_SRC;cutout(encodeURI(FOLDER_SRC),false,function(u,fb){if(!fb)FOLDER_URL=u});
+  if(route()==='garments'&&!unlocked)location.hash='main';
+  stack.push(route());render();
+})();
+</script>
+</body>
+</html>
